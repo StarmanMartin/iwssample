@@ -1,101 +1,54 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"log"
-	"reflect"
+
+	"golang.org/x/tour/tree"
 )
 
-func main() {
-	defer func() {
-        if r := recover(); r != nil {
-            fmt.Println("Recovered in f", r)
-			Array()
-        }
-    }()
-	
-	for i:= 0; i < 5; i++ {
-		defer fmt.Println("Done!!!", i)
+// Walk depth-first tree traversal
+func Walk(t *tree.Tree, ch chan int) {
+	if t.Left != nil {
+		Walk(t.Left, ch)
 	}
-	
-	Zuweisungen()
+
+	ch <- t.Value // process node
+
+	if t.Right != nil {
+		Walk(t.Right, ch)
+	}
 }
 
-//Fibonacci holds the last two Elements of a Fibonacci row
-type Fibonacci struct {
-	a int
-	b int
+// FullWalk the full tree, close output channel when done
+func FullWalk(t *tree.Tree, ch chan int) {
+	Walk(t, ch)
+	close(ch)
 }
 
-//NewFibonacci returns an new instance of Fibonacci struct
-func NewFibonacci() *Fibonacci {
-	return &Fibonacci{1, 1}
-}
+// Same checks whether two binary trees store the same sequence
+func Same(t1, t2 *tree.Tree) bool {
+	ch1 := make(chan int)
+	go FullWalk(t1, ch1)
+	ch2 := make(chan int)
+	go FullWalk(t2, ch2)
 
-//Zuweisungen shows the different ways of Zuweisungen in go
-func Zuweisungen() {
-	
-	a, b := 1, 2.0
-	fmt.Printf("a ist = %s\n", reflect.TypeOf(a))
-	fmt.Printf("b ist = %s\n", reflect.TypeOf(b))
-	var c, d int
+	for {
+		v1, ok1 := <-ch1
+		v2, ok2 := <-ch2
 
-	fib := NewFibonacci()
-
-	c, d, _ = fib.CalculateNext()
-
-	fmt.Printf("c ist = (%s)%d\n", reflect.TypeOf(c), c)
-	fmt.Printf("d ist = (%s)%d\n", reflect.TypeOf(d), d)
-
-	doXTimes(func() {
-		fmt.Printf("Next Fib ist = (%s)%d\n", reflect.TypeOf(fib.a), fib.a)
-		if _, _, err := fib.CalculateNext(); err != nil {
-			log.Fatal(err)
+		if !ok1 && !ok2 { // no more nodes in trees
+			break
 		}
-	}, 10)
-
-	fib.SetA(-1)
-
-	if _, _, err := fib.CalculateNext(); err != nil {
-		//log.Fatal(err)
-		panic(err.Error())
+		if ok1 != ok2 { // trees with different number of nodes
+			return false
+		}
+		if v1 != v2 {
+			return false
+		}
 	}
-
+	return true
 }
 
-func doXTimes(aFunction func(), x int) {
-	for i := 0; i < x; i++ {
-		aFunction()
-	}
-}
-
-//SetA sets one of the two last Fibonacci numbers
-func (fib *Fibonacci) SetA(newA int) {
-	fib.a = newA
-}
-
-//CalculateNext calculates the next Fibonacci number
-func (fib *Fibonacci) CalculateNext() (int, int, error) {
-	var err error
-	if fib.a <= 0 || fib.b <= 0 {
-		err = errors.New("No good man. a or b are to small")
-	}
-	
-	fib.a, fib.b = fib.b, fib.a + fib.b
-	
-	return fib.a, fib.b, err
-}
-
-//Array shows the go Array Syntax by example
-func Array() {
-	var a [5]string
-	a[0] = "Hallo"
-	a[1] = "Mannheim"
-	a[2] = "Wir"
-	a[3] = "lieben"
-	a[4] = "Dich"
-	fmt.Println(a)
-	b := a[0:2]
-	fmt.Println(b, len(b), cap(b))
+func main() {
+	fmt.Println("Trees equivalent?", Same(tree.New(1), tree.New(2)))
 }
