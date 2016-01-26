@@ -33,9 +33,8 @@ func NewFibonacci() *Fibonacci {
 	return &Fibonacci{1, 1}
 }
 
-//Zuweisungen shows the different ways of Zuweisungen in go
-func Zuweisungen() {
-	
+//Zuweisungen shows the different ways of allocation in go
+func Zuweisungen() {	
 	a, b := 1, 2.0
 	fmt.Printf("a ist = %s\n", reflect.TypeOf(a))
 	fmt.Printf("b ist = %s\n", reflect.TypeOf(b))
@@ -58,10 +57,8 @@ func Zuweisungen() {
 	fib.SetA(-1)
 
 	if _, _, err := fib.CalculateNext(); err != nil {
-		//log.Fatal(err)
-		panic(err.Error())
+		log.Fatal(err)
 	}
-
 }
 
 func doXTimes(aFunction func(), x int) {
@@ -79,7 +76,7 @@ func (fib *Fibonacci) SetA(newA int) {
 func (fib *Fibonacci) CalculateNext() (int, int, error) {
 	var err error
 	if fib.a <= 0 || fib.b <= 0 {
-		err = errors.New("No good man. a or b are to small")
+		err = errors.New("a or b smaller then 0")
 	}
 	
 	fib.a, fib.b = fib.b, fib.a + fib.b
